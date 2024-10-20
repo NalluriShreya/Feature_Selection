@@ -1,0 +1,30 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+from sklearn.feature_selection import VarianceThreshold
+
+diabetes_dataset = pd.read_csv('diabetes.csv')
+
+X_features = diabetes_dataset.drop(columns=['Outcome'])
+y_target = diabetes_dataset['Outcome']
+
+selector_diabetes = VarianceThreshold(threshold=0.01)
+X_features_low_variance = selector_diabetes.fit_transform(X_features)
+
+mask_diabetes = selector_diabetes.get_support()
+low_variance_features = X_features.loc[:, mask_diabetes]
+cleaned_diabetes_low_variance = pd.concat([low_variance_features, y_target.reset_index(drop=True)], axis=1)
+
+X_low_variance = cleaned_diabetes_low_variance.drop(columns=['Outcome'])
+y_low_variance = cleaned_diabetes_low_variance['Outcome']
+
+X_low_variance_train, X_low_variance_test, y_low_variance_train, y_low_variance_test = train_test_split(X_low_variance, y_low_variance, test_size=0.3, random_state=42)
+
+diabetes_model_low_variance = LogisticRegression(max_iter=200)
+diabetes_model_low_variance.fit(X_low_variance_train, y_low_variance_train)
+
+y_pred_low_variance = diabetes_model_low_variance.predict(X_low_variance_test)
+accuracy_low_variance = accuracy_score(y_low_variance_test, y_pred_low_variance)
+
+print(f'Accuracy after Low Variance Filter (Diabetes): {accuracy_low_variance:.4f}')
